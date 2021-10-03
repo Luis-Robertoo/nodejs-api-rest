@@ -1,19 +1,25 @@
-/*const express = require('express')
+//a responsabilidade é subir o servidor
 
-const app = express()
+//customExpress importa da pasta config
+const customExpress = require("./config/customExpress") 
 
-app.listen(3000, () => {console.log('Servidor rodando na porta 3000')})
+const conexao = require('./infraestrutura/conexao')
 
-app.get('/atendimentos', (req, res) => res.send('Você está na rota de atendimentos e esta realizando um GET'))
+const Tabelas = require('./infraestrutura/tabelas')
 
-*/
+conexao.connect(erro => {
+    if(erro) {
+        console.log(erro)
+    } else {
+        console.log('conectado no banco')
 
-const express = require('express')
+        Tabelas.init(conexao)
+        
+        const app = customExpress()
+        app.listen(3000, () => {console.log('Servidor rodando na porta 3000')})
 
-const PORT = process.env.PORT || 5000
+    }
+})
 
-const app = express()
-  
-app.listen(PORT, () => console.log(`Listening on ${ PORT }`))
-  
-app.get('/', (req, res) => res.send('Você está na rota de atendimentos e esta realizando um GET'))
+
+
