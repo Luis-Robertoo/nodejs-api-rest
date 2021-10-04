@@ -57,8 +57,17 @@ module.exports = app => {
     })
 
     app.delete('/atendimentos/:id', (req, res) => {
-        const id = parseInt(req.params.id)
+        const resposta = req.params.id
+        if(resposta == 'true'){
 
-        Atendimento.deleta(id, res)
+            Atendimento.deletatudo(resposta, res)
+
+        } else {
+            const id = parseInt(req.params.id)
+
+            Atendimento.deleta(id, res)
+        }
+
     })
+
 }

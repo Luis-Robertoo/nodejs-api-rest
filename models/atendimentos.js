@@ -1,5 +1,6 @@
 //importa a biblioteca moment que faz a manipulação de data e hora
 const moment = require('moment')
+const axios = require('axios')
 
 //pega o objeto conexao de infra conexao
 const conexao = require('../infraestrutura/conexao')
@@ -98,11 +99,14 @@ class Atendimento {
         const sql = `SELECT * FROM atendimentos WHERE id=${id}`
 
 
-        conexao.query(sql, (erro, resultado) => {
+        conexao.query(sql, async (erro, resultado) => {
             const atendimento = resultado[0]
+            const cpf = atendimento.cliente
             if(erro){
                 res.status(400).json(erro)
             } else {
+                const { data } = await axios.get(`http://localhost:8082/${cpf}`)
+                atendimento.cliente = data
                 res.status(200).json(atendimento)
             }
         })
@@ -138,6 +142,19 @@ class Atendimento {
                 res.status(400).json(erro)
             } else {
                 res.status(200).json({id})
+            }
+        })
+    }
+
+    deletatudo(resposta, res){
+        
+        const sql = 'DELETE FROM atendimentos'
+
+        conexao.query(sql, (erro, resultado) => {
+            if(erro){
+                res.status(400).json(erro)
+            } else {
+                res.status(200).json(resultado)
             }
         })
     }
