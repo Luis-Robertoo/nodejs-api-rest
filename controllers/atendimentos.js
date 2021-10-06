@@ -1,5 +1,5 @@
 //pega o objeto conexao de infra conexao
-const conexao = require('../infraestrutura/conexao')
+const conexao = require('../infraestrutura/database/conexao')
 
 //vai até models e pega o obejo com os metodos para cada tipo de requisição
 const Atendimento = require('../models/atendimentos')
@@ -8,18 +8,11 @@ const Atendimento = require('../models/atendimentos')
 //devolve APP para customExpress e consign
 module.exports = app => {
 
-    //APP acompanhado do VERBO HTTP 
-    //rota, uma funcao que recebe dois parametros
-    //primeiro é o que o cliente enviou para o servidor - req
-    //segundo é a resposta do servidor para o cliente - res
     app.get('/atendimentos', (req, res) => {
 
-        //chama o metodo lista do objeto Atendimentos
-        //e passa como parametro res
-        //aqui esse parametro vai ser a resposta
-        //do processamento do metodo lista 
-        Atendimento.lista(res)
-    
+        Atendimento.lista()
+            .then(resultados => res.json(resultados))
+            .catch(erros => res.status(400).json(erros))
     })
 
     app.get('/atendimentos/:id', (req,res) => {
@@ -34,13 +27,13 @@ module.exports = app => {
 
     app.post('/atendimentos', (req, res) => {
 
-        //guarda o body(corpo) da requisição do cliente em atendimento
         const atendimento = req.body
 
-        //chama o médoto adiciona com dois parametros
-        //atendimento e o res
-        //que novamente vai ser processado e devolvido
-        Atendimento.adiciona(atendimento, res)
+        Atendimento.adiciona(atendimento)
+            .then(atendimentoCadastrado => 
+                res.status(201).json(atendimentoCadastrado))
+            .catch(erros => 
+                res.status(400).json(erros))
 
     })
     

@@ -1,96 +1,73 @@
-//importa a biblioteca moment que faz a manipulação de data e hora
+
 const moment = require('moment')
 const axios = require('axios')
 
-//pega o objeto conexao de infra conexao
-const conexao = require('../infraestrutura/conexao')
+const conexao = require('../infraestrutura/database/conexao')
 
-//cria a classe Atendimento com os metodos  
+const repositorio = require('../repositorios/atendimentos') 
+
 class Atendimento {
+    constructor() {
+        this.dataEhValida = ({data, dataCriacao}) => moment(data).isSameOrAfter(dataCriacao)
+        this.clienteEhValidado = (tamanho) => tamanho >= 4
 
-    adiciona(atendimento, res) {
+        this.valida = (parametros) => this.validacoes.filter(campo => {
+            const { nome } = campo
+            const parametro = parametros[nome]
 
-        //pega a data atual
-        const dataCriacao = moment().format('YYYY-MM-DD HH:MM')
+            return !campo.valido(parametro)
+        })
 
-        //pega a data passada dentro do objeto atendimento 
-        //e converte para o formato aceito no banco
-        const data = moment(atendimento.data, 'DD/MM/YYYY').format('YYYY-MM-DD HH:MM')
+        
 
-        //retorna um booleado depois de verificar se a data passada é depois da data atual
-        const dataEhValida = moment(data).isSameOrAfter(dataCriacao)
-
-        //retorna um boobeano depois de verificar se o nome do cliente é maior que 4 letras
-        const clienteEhValidado = atendimento.cliente.length >= 4
-
-        //cria um array de objetos
-        const validacoes = [
+        this.validacoes = [
             {
                 nome: 'data',
-                valido: dataEhValida,
+                valido: this.dataEhValida,
                 mensagem: 'Data deve ser maior ou igual a data atual'
             },
             {
                 nome: 'cliente',
-                valido: clienteEhValidado,
+                valido: this.clienteEhValidado,
                 mensagem: 'Cliente deve ter 4 caracteres ou mais'
             }
         ]
+    }
+        
+ 
 
-        //cria um array com objetos caso o campo valido seja true
-        const erros = validacoes.filter(campo => !campo.valido)
+    adiciona(atendimento) {
 
-        //pega o tamanho do array erros
+        const dataCriacao = moment().format('YYYY-MM-DD HH:MM')
+
+        const data = moment(atendimento.data, 'DD/MM/YYYY').format('YYYY-MM-DD HH:MM')
+
+
+        const parametros = {
+            data: { data, dataCriacao },
+            cliente: { tamanho: atendimento.cliente.length }
+        }
+
+        const erros = this.valida(parametros)
+
         const existemErros = erros.length
 
-        //caso exista algum erro retorna o status code 400
-        //com os erros no formato json
         if(existemErros){
-            res.status(400).json(erros)
+            return new Promise ((resolve, reject) => reject(erros))
         } else {
-
-            //atendimentoDatado recebe todos os dados de atendimento
-            //as datas de crição e atual corrigidas
             const atendimentoDatado = {...atendimento, dataCriacao, data}
-            
-            //coloca o começo da query
-            //esse ? diz que ela vai completar com o segundo parametro
-            const sql = 'INSERT INTO atendimentos SET ?'
-
-            //faz uma query com sql e atendimentoDatado
-            //uma função com dois argumentos vai ser retornada 
-            conexao.query(sql, atendimentoDatado, (erro, resultados) => {
-
-                //retorna o erro
-                if(erro){
-                    res.status(400).json(erro)
-
-                //retorna o dados de atendimento em formato json
-                } else {
-                    res.status(201).json(atendimento)
-                }
-            })
+    
+            return repositorio.adiciona(atendimentoDatado)
+                .then(resultados => {
+                    const id = resultados.insertId
+                    return { ...atendimento, id }
+                })
         }
-        
     }
 
 
-    lista(res) {
-        const sql = 'SELECT * FROM atendimentos'
-
-        //tenta executar a query
-        //passa uma funcao com dois parametros
-        conexao.query(sql, (erro, resultados) => {
-            if(erro){
-
-                //devolve res para o cliente com STATUS 400 e o erro em formato JSON
-                res.status(400).json(erro)
-            } else {
-                
-                //devolve res STATUS OK e o resultado da query em formato JSON
-                res.status(200).json(resultados)
-            }
-        })
+    lista() {
+        return repositorio.lista()
     }
 
     buscaPorId(id, res) {

@@ -3,10 +3,10 @@
 const customExpress = require("./config/customExpress") 
 
 //vai até infra e pega a conexao MySQL
-const conexao = require('./infraestrutura/conexao')
+const conexao = require('./infraestrutura/database/conexao')
 
 //vai até infra e pega as tabelas dessas vez
-const Tabelas = require('./infraestrutura/tabelas')
+const Tabelas = require('./infraestrutura/database/tabelas')
 
 //agora que ele já tem o objeto com os dados da conexao
 //ele chama o metodo MySQL connect com uma funcao 
